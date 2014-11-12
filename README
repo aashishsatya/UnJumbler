@@ -1,0 +1,15 @@
+UnJumbler:
+----------
+
+UnJumbler is a C++ program that tries to un-jumble the jumbled words you give to it. This was originally my Grade 12 programming project.
+
+Strategy used:
+--------------
+
+The strategy used for solving this problem is simple: find the permutations of the given jumbled word and see if the new word exists in a dictionary or not.
+
+Running the program:
+--------------------
+
+Linux: Access the bin folder and run the file 'UnJumbler' using terminal.
+Windows: Compile the file 'UnJumblerWindows.cpp' and run it.
