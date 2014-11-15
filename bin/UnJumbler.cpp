@@ -15,12 +15,12 @@ struct char_array
 // variables
 
 ifstream reqd_dict_file;   //to accept input from the corresponding dictionary file
-fstream already_displayed_words;  //to check if the word has already been displayed
+fstream already_found_words;  //to check if the word has already been found
 
 char_array word_to_unjumble;  //holds the jumbled word (to be unjumbled)
 char_array word_to_unjumble_copy;   //copy of word_to_unjumble
 char_array word_being_searched;  //to read from files and compare
-char_array displayed_words;   //container for already_displayed_words
+char_array found_words;   //container for already_found_words
 
 char file_name[7]="AA.txt";
 
@@ -59,28 +59,28 @@ void search_for_word(char_array word_to_search)
 				// word has been found
                 flag = 1;
                 
-                // check if word has already been displayed
+                // check if word has already been found
                 // this check is required for words with two or more occurrence of the same letter,
                 // because the same permutation may be generated
-                already_displayed_words.clear();
-                already_displayed_words.seekg(0);
-                already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
-                while (!already_displayed_words.eof())
+                already_found_words.clear();
+                already_found_words.seekg(0);
+                already_found_words.read((char *)&found_words, sizeof(char_array));
+                while (!already_found_words.eof())
                 {
-                    if (strcmp(displayed_words.word, word_being_searched.word) == 0)
+                    if (strcmp(found_words.word, word_being_searched.word) == 0)
                     {
 						// word has already already been found once
                         break;
                     }
-                    already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
+                    already_found_words.read((char *)&found_words, sizeof(char_array));
                 }
-                if(already_displayed_words.eof())
+                if(already_found_words.eof())
                 {
-					// word has not been displayed earlier
+					// word has not been found earlier
 					// so add it
-                    already_displayed_words.clear();
-                    already_displayed_words.seekg(0, ios::end);
-                    already_displayed_words.write((char *)&word_being_searched, sizeof(char_array));
+                    already_found_words.clear();
+                    already_found_words.seekg(0, ios::end);
+                    already_found_words.write((char *)&word_being_searched, sizeof(char_array));
                 }
             }
             reqd_dict_file.read((char *)&word_being_searched, sizeof(char_array));
@@ -151,10 +151,10 @@ int main()
         cout << "- Names of animals are allowed\n";
         cout << "- No names of people or places\n";
         cout << "- The longer the word, the longer it takes to\nget to the solution.\n";
-        cout << "- Some words displayed may seem gibberish, but most of the \ntime the words do exist. A simple Google search would reveal\nabout the same.\n";
+        cout << "- Some words found may seem gibberish, but most of the \ntime the words do exist. A simple Google search would reveal\nabout the same.\n";
         cout << "Okay, we're ready to roll...LET THE WORD BE ENTERED!\n";
         
-        already_displayed_words.open("Displayed.txt", ios::out | ios::binary | ios::in | ios::trunc);
+        already_found_words.open("found.txt", ios::out | ios::binary | ios::in | ios::trunc);
         
         cin.getline(word_to_unjumble.word, 25);
         
@@ -176,13 +176,15 @@ int main()
         if (flag == 1)	// atleast one valid word has been found
         {
             cout << "The following word(s) may form solution(s):\n";
-            already_displayed_words.clear();
-            already_displayed_words.seekg(0);
-            already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
-            while (!already_displayed_words.eof())
+            
+            // read from already_found_words_file
+            already_found_words.clear();
+            already_found_words.seekg(0);
+            already_found_words.read((char *)&found_words, sizeof(char_array));
+            while (!already_found_words.eof())
             {
-                cout << displayed_words.word << endl;
-                already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
+                cout << found_words.word << endl;
+                already_found_words.read((char *)&found_words, sizeof(char_array));
             }
         }
         else
@@ -196,7 +198,7 @@ int main()
             system("clear");
             cout << "You might wanna take a look at the rules again:\n";
         }
-        already_displayed_words.close();
+        already_found_words.close();
         cin.ignore();
     } while(choice == 'y' || choice == 'Y');
     cout << "Thank you for using my program! Do come again! Press Enter key to exit: ";
