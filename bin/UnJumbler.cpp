@@ -74,6 +74,7 @@ void search_for_word(char_array word_to_search)
                     }
                     already_found_words.read((char *)&found_words, sizeof(char_array));
                 }
+                
                 if(already_found_words.eof())
                 {
 					// word has not been found earlier
@@ -82,6 +83,7 @@ void search_for_word(char_array word_to_search)
                     already_found_words.seekg(0, ios::end);
                     already_found_words.write((char *)&word_being_searched, sizeof(char_array));
                 }
+                
             }
             reqd_dict_file.read((char *)&word_being_searched, sizeof(char_array));
         }
@@ -186,22 +188,29 @@ int main()
                 cout << found_words.word << endl;
                 already_found_words.read((char *)&found_words, sizeof(char_array));
             }
+            
         }
         else
         {
             cout << "I'm sorry...I could not place any word that matches with your\nset of alphabets. I need to learn :-(\n";
         }
+        
         cout << "Go again? Enter Y or N: ";
         cin >> choice;
+        
         if (choice == 'y')
         {
             system("clear");
-            cout << "You might wanna take a look at the rules again:\n";
+            cout << "You might want to take a look at the rules again:\n";
         }
+        
         already_found_words.close();
         cin.ignore();
+        
     } while(choice == 'y' || choice == 'Y');
+    
     cout << "Thank you for using my program! Do come again! Press Enter key to exit: ";
     cin.get();
+    
     return 0;
 }
