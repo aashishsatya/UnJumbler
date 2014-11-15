@@ -7,7 +7,7 @@ using namespace std;
 
 // to store a word or string, so that it can be passed without
 // worrying about mutation by a function
-struct chararray
+struct char_array
 {
     char word[11];
 };
@@ -17,10 +17,10 @@ struct chararray
 ifstream reqd_dict_file;   //to accept input from the corresponding dictionary file
 fstream already_displayed_words;  //to check if the word has already been displayed
 
-chararray word_to_unjumble;  //holds the jumbled word (to be unjumbled)
-chararray word_to_unjumble_copy;   //copy of word_to_unjumble
-chararray word_being_searched;  //to read from files and compare
-chararray displayed_words;   //container for already_displayed_words
+char_array word_to_unjumble;  //holds the jumbled word (to be unjumbled)
+char_array word_to_unjumble_copy;   //copy of word_to_unjumble
+char_array word_being_searched;  //to read from files and compare
+char_array displayed_words;   //container for already_displayed_words
 
 char file_name[7]="AA.txt";
 
@@ -35,7 +35,7 @@ int second_last_pos; // second last position
 // functions
 
 // searches if a given word exists in the dictionary
-void search_for_word(chararray word_to_search)
+void search_for_word(char_array word_to_search)
 {
 	// find the corresponding dictionary file
     file_name[0] = word_to_search.word[0];
@@ -47,7 +47,7 @@ void search_for_word(chararray word_to_search)
     //check if the file exists and is good for i/o operations
     if (reqd_dict_file.good())  
     {
-        reqd_dict_file.read((char *)&word_being_searched, sizeof(chararray));
+        reqd_dict_file.read((char *)&word_being_searched, sizeof(char_array));
         
         // cheap optimization to check if third letter matches
         // works because minimum word length asked for is three
@@ -64,7 +64,7 @@ void search_for_word(chararray word_to_search)
                 // because the same permutation may be generated
                 already_displayed_words.clear();
                 already_displayed_words.seekg(0);
-                already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+                already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
                 while (!already_displayed_words.eof())
                 {
                     if (strcmp(displayed_words.word, word_being_searched.word) == 0)
@@ -72,7 +72,7 @@ void search_for_word(chararray word_to_search)
 						// word has already already been found once
                         break;
                     }
-                    already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+                    already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
                 }
                 if(already_displayed_words.eof())
                 {
@@ -80,10 +80,10 @@ void search_for_word(chararray word_to_search)
 					// so add it
                     already_displayed_words.clear();
                     already_displayed_words.seekg(0, ios::end);
-                    already_displayed_words.write((char *)&word_being_searched, sizeof(chararray));
+                    already_displayed_words.write((char *)&word_being_searched, sizeof(char_array));
                 }
             }
-            reqd_dict_file.read((char *)&word_being_searched, sizeof(chararray));
+            reqd_dict_file.read((char *)&word_being_searched, sizeof(char_array));
         }
     }
     reqd_dict_file.close();
@@ -98,7 +98,7 @@ void search_for_word(chararray word_to_search)
  
 // current_index says which is the "starting letter" to be picked in the recursion
 
-void generate_permutations(chararray word_to_permute, int current_index)
+void generate_permutations(char_array word_to_permute, int current_index)
 {
 	// swap the last two letters to generate two new permutations
     if(current_index == 2)
@@ -178,11 +178,11 @@ int main()
             cout << "The following word(s) may form solution(s):\n";
             already_displayed_words.clear();
             already_displayed_words.seekg(0);
-            already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+            already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
             while (!already_displayed_words.eof())
             {
                 cout << displayed_words.word << endl;
-                already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+                already_displayed_words.read((char *)&displayed_words, sizeof(char_array));
             }
         }
         else
