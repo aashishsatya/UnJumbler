@@ -5,81 +5,130 @@
 
 using namespace std;
 
-struct chararray  //for string
+// to store a word or string, so that it can be passed without
+// worrying about mutation by a function
+struct chararray
 {
-    char letword[11];
+    char word[11];
 };
 
-ifstream wordsrh;   //to accept input from all files
-fstream oncedisp;  //to check if the word has already been displayed
-chararray jumbword;  //holds the jumbled word (to be unjumbled)
-chararray jumbtemp;   //copy of jumbword
-chararray word_being_searched;  //to read from files and compare
-chararray cforod;   //container for oncedisp
-char filename[7]="AA.txt";
-char temp;  //for swapping
-char ch='n';    //exit control for do-while loop
-int lastpos;    //last position
-int seclastpos; //second last position
-int flag;   //to see if a word has been found - one for yes and zero for no
-int i;  //sidekick
+// variables
 
-void searchword(chararray search)
+ifstream reqd_dict_file;   //to accept input from the corresponding dictionary file
+fstream already_displayed_words;  //to check if the word has already been displayed
+
+chararray word_to_unjumble;  //holds the jumbled word (to be unjumbled)
+chararray word_to_unjumble_copy;   //copy of word_to_unjumble
+chararray word_being_searched;  //to read from files and compare
+chararray displayed_words;   //container for already_displayed_words
+
+char file_name[7]="AA.txt";
+
+char temp;  //for swapping
+char choice = 'n';    //exit control for do-while loop
+int flag;   //to see if a word has been found - one for yes and zero for no
+unsigned int i;  //sidekick
+
+int last_pos; // last position   
+int second_last_pos; // second last position
+
+// functions
+
+// searches if a given word exists in the dictionary
+void search_for_word(chararray word_to_search)
 {
-    filename[0] = search.letword[0];
-    filename[1] = search.letword[1];
-    wordsrh.open(filename, ios::binary|ios::in);
-    if (wordsrh.good())  //if the file exists and is good for i/o operations
+	// find the corresponding dictionary file
+    file_name[0] = word_to_search.word[0];
+    file_name[1] = word_to_search.word[1];
+    
+    //open it, or atleast try to
+    reqd_dict_file.open(file_name, ios::binary|ios::in);
+    
+    //check if the file exists and is good for i/o operations
+    if (reqd_dict_file.good())  
     {
-        wordsrh.read((char *)&word_being_searched, sizeof(chararray));
-        while (!wordsrh.eof()&&word_being_searched.letword[2] <= search.letword[2])
+        reqd_dict_file.read((char *)&word_being_searched, sizeof(chararray));
+        
+        // cheap optimization to check if third letter matches
+        // works because minimum word length asked for is three
+        while (!reqd_dict_file.eof() && word_being_searched.word[2] <= word_to_search.word[2])
         {
-            if (strcmp(search.letword, word_being_searched.letword) == 0)
+			// compare full word now
+            if (strcmp(word_to_search.word, word_being_searched.word) == 0)
             {
+				// word has been found
                 flag = 1;
-                oncedisp.clear();
-                oncedisp.seekg(0);
-                oncedisp.read((char *)&cforod, sizeof(chararray));
-                while (!oncedisp.eof())
+                
+                // check if word has already been displayed
+                // this check is required for words with two or more occurrence of the same letter,
+                // because the same permutation may be generated
+                already_displayed_words.clear();
+                already_displayed_words.seekg(0);
+                already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+                while (!already_displayed_words.eof())
                 {
-                    if (strcmp(cforod.letword, word_being_searched.letword) == 0)
+                    if (strcmp(displayed_words.word, word_being_searched.word) == 0)
                     {
+						// word has already already been found once
                         break;
                     }
-                    oncedisp.read((char *)&cforod, sizeof(chararray));
+                    already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
                 }
-                if(oncedisp.eof())
+                if(already_displayed_words.eof())
                 {
-                    oncedisp.clear();
-                    oncedisp.seekg(0, ios::end);
-                    oncedisp.write((char *)&word_being_searched, sizeof(chararray));
+					// word has not been displayed earlier
+					// so add it
+                    already_displayed_words.clear();
+                    already_displayed_words.seekg(0, ios::end);
+                    already_displayed_words.write((char *)&word_being_searched, sizeof(chararray));
                 }
             }
-            wordsrh.read((char *)&word_being_searched, sizeof(chararray));
+            reqd_dict_file.read((char *)&word_being_searched, sizeof(chararray));
         }
     }
-    wordsrh.close();
+    reqd_dict_file.close();
 }
 
-void changeword(chararray p_word, int order)
+// function that generates permutations
+
+/* Key idea:
+ * To generate permutations of a word, replace the starting letter of the word
+ * by all its subsequent letters in each step, and generate permutations like this:
+ * Permutations of a word = starting letter + permutation of all subsequent letters */
+ 
+// current_index says which is the "starting letter" to be picked in the recursion
+
+void generate_permutations(chararray word_to_permute, int current_index)
 {
-    if(order == 2)
+	// swap the last two letters to generate two new permutations
+    if(current_index == 2)
     {
-        searchword(p_word);
-        temp = p_word.letword[lastpos];
-        p_word.letword[lastpos] = p_word.letword[seclastpos];
-        p_word.letword[seclastpos] = temp;
-        searchword(p_word);
+		// search for the word as it is
+        search_for_word(word_to_permute);
+        
+        // change last two letters
+        temp = word_to_permute.word[last_pos];
+        word_to_permute.word[last_pos] = word_to_permute.word[second_last_pos];
+        word_to_permute.word[second_last_pos] = temp;
+        
+        // search for the new word
+        search_for_word(word_to_permute);
     }
     else
     {
-        changeword(p_word, order-1);
-        for(int ctr = 0; ctr < order-1; ctr++)
+		// recursively call until control goes to above if condition, i.e.
+		// till current index becomes two
+        generate_permutations(word_to_permute, current_index - 1);
+        
+        // then swap first letter with all subsequent letters and try
+        for(int ctr = 0; ctr < current_index - 1; ctr++)
         {
-            temp = p_word.letword[lastpos-ctr];
-            p_word.letword[lastpos-ctr] = p_word.letword[lastpos-order+1];
-            p_word.letword[lastpos-order+1] = temp;
-            changeword(p_word, order-1);
+            temp = word_to_permute.word[last_pos - ctr];
+            word_to_permute.word[last_pos - ctr] = word_to_permute.word[last_pos - current_index + 1];
+            word_to_permute.word[last_pos - current_index + 1] = temp;
+            
+            // generate permutations of words with all subsequent letters
+            generate_permutations(word_to_permute, current_index - 1);
         }
     }
 }
@@ -87,11 +136,14 @@ void changeword(chararray p_word, int order)
 int main()
 {
     system("clear");
+    
+    // small talk and formalities
     cout << "Hi there! This program tries to un-jumble any word\nthat you want unjumbled.\n";
     cout << "But first some ground rules:\n";
     do
     {
         flag = 0;
+        
         cout << "- The word should have a minimum of three characters\n";
         cout << "- Maximum word size is ten\n";
         cout << "- Symbols are not supported, e.g. -, (space), etc.\n";
@@ -101,27 +153,36 @@ int main()
         cout << "- The longer the word, the longer it takes to\nget to the solution.\n";
         cout << "- Some words displayed may seem gibberish, but most of the \ntime the words do exist. A simple Google search would reveal\nabout the same.\n";
         cout << "Okay, we're ready to roll...LET THE WORD BE ENTERED!\n";
-        oncedisp.open("Displayed.txt", ios::out | ios::binary | ios::in | ios::trunc);
-        cin.getline(jumbword.letword, 25);
-        for(i = 0; i < strlen(jumbword.letword); i++)
+        
+        already_displayed_words.open("Displayed.txt", ios::out | ios::binary | ios::in | ios::trunc);
+        
+        cin.getline(word_to_unjumble.word, 25);
+        
+        for(i = 0; i < strlen(word_to_unjumble.word); i++)
         {
-            jumbword.letword[i] = toupper(jumbword.letword[i]);
+            word_to_unjumble.word[i] = toupper(word_to_unjumble.word[i]);
         }
-        lastpos = strlen(jumbword.letword) - 1;
-        seclastpos = lastpos - 1;
-        jumbtemp = jumbword;
+        
+        last_pos = strlen(word_to_unjumble.word) - 1;
+        second_last_pos = last_pos - 1;
+        word_to_unjumble_copy = word_to_unjumble;
+        
+        // heh heh, already make an excuse
         cout << "Loading results, this may take some time...\n";
-        changeword(jumbtemp, strlen(jumbtemp.letword));
-        if (flag == 1)
+        
+        // the main call that does the work
+        generate_permutations(word_to_unjumble_copy, strlen(word_to_unjumble_copy.word));
+        
+        if (flag == 1)	// atleast one valid word has been found
         {
             cout << "The following word(s) may form solution(s):\n";
-            oncedisp.clear();
-            oncedisp.seekg(0);
-            oncedisp.read((char *)&cforod, sizeof(chararray));
-            while (!oncedisp.eof())
+            already_displayed_words.clear();
+            already_displayed_words.seekg(0);
+            already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
+            while (!already_displayed_words.eof())
             {
-                cout << cforod.letword << endl;
-                oncedisp.read((char *)&cforod, sizeof(chararray));
+                cout << displayed_words.word << endl;
+                already_displayed_words.read((char *)&displayed_words, sizeof(chararray));
             }
         }
         else
@@ -129,15 +190,15 @@ int main()
             cout << "I'm sorry...I could not place any word that matches with your\nset of alphabets. I need to learn :-(\n";
         }
         cout << "Go again? Enter Y or N: ";
-        cin >> ch;
-        if (ch == 'y')
+        cin >> choice;
+        if (choice == 'y')
         {
             system("clear");
             cout << "You might wanna take a look at the rules again:\n";
         }
-        oncedisp.close();
+        already_displayed_words.close();
         cin.ignore();
-    } while(ch == 'y' || ch == 'Y');
+    } while(choice == 'y' || choice == 'Y');
     cout << "Thank you for using my program! Do come again! Press Enter key to exit: ";
     cin.get();
     return 0;
